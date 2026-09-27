@@ -1,0 +1,525 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Bengali Adda — Partha Bera</title>
+<meta name="description" content="Bengali songs, curated by Partha Bera.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg: #050505;
+    --fg: #f2f2f0;
+    --fg-dim: rgba(242,242,240,0.5);
+    --fg-faint: rgba(242,242,240,0.28);
+    --line: rgba(255,255,255,0.1);
+    --accent: #4ee08a;
+  }
+
+  *{ margin:0; padding:0; box-sizing:border-box; }
+
+  html, body{ height:100%; }
+
+  body{
+    font-family: 'Inter', -apple-system, sans-serif;
+    background: var(--bg);
+    color: var(--fg);
+    min-height: 100vh;
+    min-height: 100dvh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* top bar: live counter left, links right */
+  .topbar{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:16px;
+    padding: 22px 24px;
+  }
+
+  .live{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    font-size: 0.8rem;
+    color: var(--fg-dim);
+  }
+
+  .friends{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    padding: 6px 10px;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    background: rgba(255,255,255,0.02);
+    color: var(--fg-dim);
+    font-size: 0.72rem;
+    white-space: nowrap;
+  }
+  .friend-pill{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    min-width: 54px;
+    padding: 4px 8px;
+    border-radius: 999px;
+    background: rgba(78,224,138,0.08);
+    color: var(--fg);
+    border: 1px solid rgba(78,224,138,0.22);
+  }
+  .friend-pill--you{
+    background: rgba(255,255,255,0.06);
+    border-color: var(--line);
+  }
+  .live .dot{
+    width:7px; height:7px;
+    border-radius:50%;
+    background: var(--accent);
+    box-shadow: 0 0 0 0 rgba(78,224,138,0.6);
+    animation: pulse 2s infinite;
+  }
+  @keyframes pulse{
+    0%{ box-shadow: 0 0 0 0 rgba(78,224,138,0.5); }
+    70%{ box-shadow: 0 0 0 6px rgba(78,224,138,0); }
+    100%{ box-shadow: 0 0 0 0 rgba(78,224,138,0); }
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+
+  .links{
+    display:flex;
+    gap: 18px;
+  }
+  .links a{
+    font-size: 0.8rem;
+    color: var(--fg-dim);
+    text-decoration:none;
+    border-bottom: 1px solid transparent;
+    transition: color 0.15s ease, border-color 0.15s ease;
+  }
+  .links a:hover{
+    color: var(--fg);
+    border-color: var(--line);
+  }
+
+  /* centering stage */
+  .stage{
+    flex:1;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding: 24px;
+  }
+
+  .player{
+    width: 100%;
+    max-width: 380px;
+    text-align:center;
+  }
+
+  h1{
+    font-size: 2rem;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    line-height: 1.1;
+    margin-bottom: 6px;
+  }
+
+  .subhead{
+    font-size: 0.9rem;
+    color: var(--fg-dim);
+    margin-bottom: 34px;
+  }
+
+  .art-wrap{
+    position: relative;
+    width: 100%;
+    max-width: 260px;
+    aspect-ratio: 1 / 1;
+    margin: 0 auto 24px;
+    border-radius: 10px;
+    overflow: hidden;
+    background: #111;
+    border: 1px solid var(--line);
+  }
+  .art-wrap img{
+    width:100%; height:100%;
+    object-fit: cover;
+    display:block;
+  }
+
+  /* YouTube iframe kept off-screen — audio only, cover art is the visual */
+  .yt-holder{
+    position:absolute;
+    width:1px; height:1px;
+    overflow:hidden;
+    opacity:0;
+    pointer-events:none;
+    left:-9999px;
+  }
+
+  .track-title{
+    font-size: 1.05rem;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    margin-bottom: 4px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .track-artist{
+    font-size: 0.85rem;
+    color: var(--fg-dim);
+    margin-bottom: 24px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .seek-row{
+    display:flex;
+    align-items:center;
+    gap: 10px;
+    margin-bottom: 4px;
+  }
+  input[type="range"]{
+    -webkit-appearance:none; appearance:none;
+    flex:1;
+    height: 3px;
+    border-radius: 999px;
+    background: var(--line);
+    outline:none;
+    cursor:pointer;
+  }
+  input[type="range"]::-webkit-slider-thumb{
+    -webkit-appearance:none;
+    width: 11px; height: 11px;
+    border-radius:50%;
+    background: var(--fg);
+    cursor:pointer;
+  }
+  input[type="range"]::-moz-range-thumb{
+    width: 11px; height: 11px;
+    border:none;
+    border-radius:50%;
+    background: var(--fg);
+    cursor:pointer;
+  }
+
+  .time-row{
+    font-size: 0.72rem;
+    color: var(--fg-faint);
+    font-variant-numeric: tabular-nums;
+    margin-bottom: 28px;
+  }
+
+  .controls{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap: 22px;
+  }
+
+  .ctrl-btn{
+    background: none;
+    border: none;
+    color: var(--fg-dim);
+    cursor: pointer;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding: 6px;
+    transition: color 0.15s ease, transform 0.15s ease;
+  }
+  .ctrl-btn:hover{ color: var(--fg); }
+  .ctrl-btn.active{ color: var(--accent); }
+
+  .ctrl-btn--main{
+    width: 52px; height: 52px;
+    border-radius: 50%;
+    background: var(--fg);
+    color: #050505;
+  }
+  .ctrl-btn--main:hover{ transform: scale(1.05); color:#050505; }
+
+  .like-row{
+    display:flex;
+    justify-content:center;
+    margin-top: 22px;
+  }
+  .like-btn{
+    background:none; border:none; color: var(--fg-faint);
+    cursor:pointer; padding:6px;
+    transition: color 0.15s ease;
+  }
+  .like-btn:hover{ color: var(--fg-dim); }
+  .like-btn.active{ color:#e05a5a; }
+
+  footer{
+    text-align:center;
+    padding: 18px;
+    font-size: 0.72rem;
+    color: var(--fg-faint);
+  }
+  footer b{ color: var(--fg-dim); font-weight: 600; }
+
+  @media (max-height: 700px){
+    .art-wrap{ max-width: 200px; margin-bottom: 16px; }
+    h1{ font-size: 1.6rem; }
+    .subhead{ margin-bottom: 20px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="live"><span class="dot"></span><span id="online-count">— online</span></div>
+  <div class="friends" aria-label="Friends list">
+    <span>Friends</span>
+    <span class="friend-pill">Partha</span>
+    <span class="friend-pill friend-pill--you">You</span>
+  </div>
+  <div class="links">
+    <a href="https://www.instagram.com/_hey.partha" target="_blank" rel="noopener">Instagram</a>
+    <a href="https://youtube.com/playlist?list=PLzxTmXYDR-xUINMdHVMMib9rH6vwBquxX&si=jltfZ0003KX7nCC9" target="_blank" rel="noopener">Playlist</a>
+    <a href="https://youtube.com/playlist?list=PLzxTmXYDR-xUINMdHVMMib9rH6vwBquxX&si=jltfZ0003KX7nCC9" target="_blank" rel="noopener">YouTube</a>
+  </div>
+</div>
+
+<div class="stage">
+  <div class="player">
+    <h1>Bengali Adda</h1>
+    <p class="subhead">Curated by Partha Bera</p>
+
+    <div class="art-wrap">
+      <img id="cover-art" src="" alt="Album art">
+      <div class="yt-holder"><div id="yt-player"></div></div>
+    </div>
+
+    <div class="track-title" id="track-title">Loading…</div>
+    <div class="track-artist" id="track-artist">&nbsp;</div>
+
+    <div class="seek-row">
+      <input type="range" id="seek-bar" min="0" max="100" value="0" step="0.1">
+    </div>
+    <div class="time-row"><span id="time-current">0:00</span> / <span id="time-duration">0:00</span></div>
+
+    <div class="controls">
+      <button class="ctrl-btn" id="btn-shuffle" title="Shuffle">
+        <svg viewBox="0 0 24 24" width="18" height="18"><path fill="currentColor" d="M10.59 9.17 5.41 4 4 5.41l5.17 5.17zM14.5 4l2.04 2.04L4 18.59 5.41 20 17.96 7.46 20 9.5V4zm.33 9.41-1.41 1.41 3.13 3.13L14.5 20H20v-5.5l-2.04 2.04z"/></svg>
+      </button>
+      <button class="ctrl-btn" id="btn-prev" title="Previous">
+        <svg viewBox="0 0 24 24" width="22" height="22"><path fill="currentColor" d="M6 6h2v12H6zm3.5 6l8.5 6V6z"/></svg>
+      </button>
+      <button class="ctrl-btn ctrl-btn--main" id="btn-play" title="Play">
+        <svg id="icon-play" viewBox="0 0 24 24" width="22" height="22"><path fill="currentColor" d="M8 5v14l11-7z"/></svg>
+        <svg id="icon-pause" viewBox="0 0 24 24" width="22" height="22" style="display:none"><path fill="currentColor" d="M6 5h4v14H6zm8 0h4v14h-4z"/></svg>
+      </button>
+      <button class="ctrl-btn" id="btn-next" title="Next">
+        <svg viewBox="0 0 24 24" width="22" height="22"><path fill="currentColor" d="M16 6h2v12h-2zm-2 6L5.5 6v12z"/></svg>
+      </button>
+      <button class="ctrl-btn" id="btn-repeat" title="Repeat">
+        <svg viewBox="0 0 24 24" width="18" height="18"><path fill="currentColor" d="M7 7h10v3l4-4-4-4v3H5v6h2zm10 10H7v-3l-4 4 4 4v-3h12v-6h-2z"/></svg>
+      </button>
+    </div>
+
+    <div class="like-row">
+      <button class="like-btn" id="btn-like" title="Like">
+        <svg viewBox="0 0 24 24" width="19" height="19"><path fill="currentColor" d="M12 21s-6.7-4.35-9.33-8.2C.86 10.28 1.6 6.6 4.6 5.1 6.98 3.9 9.6 4.7 11 6.6l1 1.35 1-1.35c1.4-1.9 4.02-2.7 6.4-1.5 3 1.5 3.74 5.18 1.93 7.7C18.7 16.65 12 21 12 21z"/></svg>
+      </button>
+    </div>
+  </div>
+</div>
+
+<footer>Bengali Songs · <b>Partha Bera</b></footer>
+
+<script>
+  const PLAYLIST_ID = "PLzxTmXYDR-xUINMdHVMMib9rH6vwBquxX";
+  const PLAYLIST_URL = "https://youtube.com/playlist?list=PLzxTmXYDR-xUINMdHVMMib9rH6vwBquxX&si=jltfZ0003KX7nCC9";
+  const START_INDEX = 0; // play every track in the playlist, from the first
+
+  let player;
+  let isSeeking = false;
+  let repeatOn = false;
+  let liked = false;
+
+  const playlistLink = document.querySelector('a[href*="playlist?list="]');
+  if (playlistLink) playlistLink.href = PLAYLIST_URL;
+
+  const el = {
+    trackTitle: document.getElementById('track-title'),
+    trackArtist: document.getElementById('track-artist'),
+    coverArt: document.getElementById('cover-art'),
+    seekBar: document.getElementById('seek-bar'),
+    timeCurrent: document.getElementById('time-current'),
+    timeDuration: document.getElementById('time-duration'),
+    btnPlay: document.getElementById('btn-play'),
+    btnPrev: document.getElementById('btn-prev'),
+    btnNext: document.getElementById('btn-next'),
+    btnRepeat: document.getElementById('btn-repeat'),
+    btnShuffle: document.getElementById('btn-shuffle'),
+    btnLike: document.getElementById('btn-like'),
+    iconPlay: document.getElementById('icon-play'),
+    iconPause: document.getElementById('icon-pause'),
+  };
+
+  function formatTime(sec){
+    if (!isFinite(sec) || sec < 0) sec = 0;
+    const m = Math.floor(sec / 60);
+    const s = Math.floor(sec % 60).toString().padStart(2, '0');
+    return `${m}:${s}`;
+  }
+
+  function loadYouTubeAPI(){
+    if (window.YT && window.YT.Player) {
+      window.onYouTubeIframeAPIReady();
+      return;
+    }
+    if (document.querySelector('script[src="https://www.youtube.com/iframe_api"]')) return;
+    const tag = document.createElement('script');
+    tag.src = "https://www.youtube.com/iframe_api";
+    tag.async = true;
+    tag.defer = true;
+    document.head.appendChild(tag);
+  }
+
+  window.onYouTubeIframeAPIReady = function(){
+    player = new YT.Player('yt-player', {
+      host: 'https://www.youtube.com',
+      playerVars: {
+        listType: 'playlist',
+        list: PLAYLIST_ID,
+        index: START_INDEX,
+        rel: 0,
+        playsinline: 1
+      },
+      events: {
+        onReady: onPlayerReady,
+        onStateChange: onPlayerStateChange,
+        onError: onPlayerError
+      }
+    });
+  };
+
+  function onPlayerReady(){
+    player.setVolume(85);
+    updateNowPlaying();
+    if (!window.__bengaliAddaTick) {
+      window.__bengaliAddaTick = setInterval(tick, 500);
+    }
+  }
+
+  function onPlayerError(){
+    el.trackTitle.textContent = "Skipping unavailable track…";
+    setTimeout(() => { if (player) player.nextVideo(); }, 1000);
+  }
+
+  function updateNowPlaying(){
+    try{
+      const data = player.getVideoData();
+      el.trackTitle.textContent = data && data.title ? data.title : "Bengali Adda";
+      el.trackArtist.textContent = data && data.author ? data.author : "\u00A0";
+      const videoId = data && data.video_id;
+      el.coverArt.src = videoId
+        ? `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`
+        : "";
+    }catch(e){
+      el.trackTitle.textContent = "Bengali Adda";
+    }
+  }
+
+  function onPlayerStateChange(e){
+    if (e.data === YT.PlayerState.PLAYING){
+      el.iconPlay.style.display = 'none';
+      el.iconPause.style.display = '';
+      updateNowPlaying();
+    } else if (e.data === YT.PlayerState.PAUSED){
+      el.iconPlay.style.display = '';
+      el.iconPause.style.display = 'none';
+    } else if (e.data === YT.PlayerState.ENDED){
+      if (repeatOn){
+        player.seekTo(0, true);
+        player.playVideo();
+      } else {
+        el.iconPlay.style.display = '';
+        el.iconPause.style.display = 'none';
+      }
+    } else if (e.data === YT.PlayerState.CUED){
+      updateNowPlaying();
+    }
+  }
+
+  function tick(){
+    if (!player || typeof player.getCurrentTime !== 'function' || isSeeking) return;
+    const cur = player.getCurrentTime();
+    const dur = player.getDuration();
+    if (dur > 0) el.seekBar.value = (cur / dur) * 100;
+    el.timeCurrent.textContent = formatTime(cur);
+    el.timeDuration.textContent = formatTime(dur);
+  }
+
+  el.btnPlay.addEventListener('click', () => {
+    if (!player) return;
+    const state = player.getPlayerState();
+    if (state === YT.PlayerState.PLAYING) player.pauseVideo();
+    else player.playVideo();
+  });
+
+  el.btnNext.addEventListener('click', () => { if (player) player.nextVideo(); });
+  el.btnPrev.addEventListener('click', () => { if (player) player.previousVideo(); });
+
+  el.btnRepeat.addEventListener('click', () => {
+    repeatOn = !repeatOn;
+    el.btnRepeat.classList.toggle('active', repeatOn);
+  });
+
+  el.btnShuffle.addEventListener('click', () => {
+    if (!player) return;
+    try{
+      const wasOn = el.btnShuffle.classList.toggle('active');
+      player.setShuffle(wasOn);
+    }catch(e){}
+  });
+
+  el.btnLike.addEventListener('click', () => {
+    liked = !liked;
+    el.btnLike.classList.toggle('active', liked);
+  });
+
+  el.seekBar.addEventListener('input', () => { isSeeking = true; });
+  el.seekBar.addEventListener('change', () => {
+    if (player){
+      const dur = player.getDuration();
+      player.seekTo((el.seekBar.value / 100) * dur, true);
+    }
+    isSeeking = false;
+  });
+
+  loadYouTubeAPI();
+
+  // Decorative "online" counter — a small ambient touch, not a real analytics feed.
+  const onlineEl = document.getElementById('online-count');
+  let onlineCount = 20 + Math.floor(Math.random() * 25);
+  function renderOnline(){ onlineEl.textContent = `${onlineCount} online`; }
+  renderOnline();
+  setInterval(() => {
+    const drift = Math.random() < 0.45 ? -1 : 1;
+    onlineCount = Math.max(4, Math.min(60, onlineCount + drift));
+    renderOnline();
+  }, 8000);
+</script>
+
+</body>
+</html>
